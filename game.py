@@ -1,9 +1,12 @@
 #!/bin/env python3
+
 import pygame
 import time
 import sys
+import array
+import math
+
 from PIL import Image
-import matplotlib.pyplot as plt
 import matplotlib.image as img
 
 if __name__ == "__main__":
@@ -12,11 +15,16 @@ if __name__ == "__main__":
     resized_img = img.resize((680, 580))
     resized_img.save("bigger_board.png")'''
 
+
     pygame.init()
     screen = pygame.display.set_mode((700, 600))
     pygame.display.set_caption("Chess board")
-    board = pygame.image.load("bigger_board.png").convert()
+    board = pygame.image.load("images/bigger_board.png").convert()
+
+    whitepawn = pygame.image.load("images/wp.png").convert()
+
     screen.blit(board, (10, 10))
+    screen.blit(whitepawn, (20, 20))
     pygame.display.flip()
     running = True
     while(running):
