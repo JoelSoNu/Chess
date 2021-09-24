@@ -34,10 +34,29 @@ def main():
     loadImages()
     pygame.display.set_caption("Chess board")
     running = True
+    sqSelected = ()
+    playerClicks = []
     while (running):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                location = pygame.mouse.get_pos()
+                row = location[0]//SQ_SIZE
+                col = location[1]//SQ_SIZE
+                if sqSelected == (row, col): #same square selected
+                    sqSelected = () #deselect
+                    playerClicks = [] #clearPlayerClicks
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected) #append 1st and 2nd clicks
+                if len(playerClicks) == 2:
+                    move = engine.Move(playerClicks[0], playerClicks[1], gs.board)
+                    print(move.getChessNotation())
+                    gs.makeMove(move)
+                    sqSelected = () #reset user clicks
+                    playerClicks = []
+
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         pygame.display.flip()
