@@ -54,18 +54,44 @@ class GameState():
         return moves, movesID
 
     def pawnMoves(self, r, c, moves, movesID):
-        if self.whiteToMove:
+        if self.whiteToMove: #white pawn moves
             if self.board[r-1][c] == "--":
                 move = Move((c, r), (c, r-1), self.board)
                 moves.append(move)
                 movesID.append(move.moveID)
-                print(move.moveID)
                 if r == 6 and self.board[r-2][c] == "--":
                     move = Move((c, r), (c, r-2), self.board)
                     moves.append(move)
                     movesID.append(move.moveID)
-        else:
-            pass
+            if c - 1 >= 0: #capture to left
+                if self.board[r-1][c-1][0] == "b": #enemy to capture
+                    move = Move((c, r), (c-1, r-1), self.board)
+                    moves.append(move)
+                    movesID.append(move.moveID)
+            if c + 1 <= 7:  # capture to left
+                if self.board[r-1][c+1][0] == "b":  # enemy to capture
+                    move = Move((c, r), (c+1, r-1), self.board)
+                    moves.append(move)
+                    movesID.append(move.moveID)
+        else: #black pawn moves
+            if self.board[r+1][c] == "--":
+                move = Move((c, r), (c, r+1), self.board)
+                moves.append(move)
+                movesID.append(move.moveID)
+                if r == 1 and self.board[r+2][c] == "--":
+                    move = Move((c, r), (c, r+2), self.board)
+                    moves.append(move)
+                    movesID.append(move.moveID)
+            if c - 1 >= 0: #capture to left
+                if self.board[r+1][c-1][0] == "w": #enemy to capture
+                    move = Move((c, r), (c-1, r+1), self.board)
+                    moves.append(move)
+                    movesID.append(move.moveID)
+            if c + 1 <= 7:  # capture to left
+                if self.board[r+1][c+1][0] == "w":  # enemy to capture
+                    move = Move((c, r), (c+1, r+1), self.board)
+                    moves.append(move)
+                    movesID.append(move.moveID)
 
     def knightMoves(self, r, c, moves, movesID):
         pass
