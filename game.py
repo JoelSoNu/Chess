@@ -14,7 +14,7 @@ import engine
 WIDTH = HEIGHT = 512
 DIMENSION = 8  #dimension of chess board is 8x8
 SQ_SIZE = HEIGHT // DIMENSION
-MAX_FPS = 15
+MAX_FPS = 30
 IMAGES = {}
 
 
@@ -56,6 +56,11 @@ def main():
                     gs.makeMove(move)
                     sqSelected = () #reset user clicks
                     playerClicks = []
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    gs.goBackMove()
+                elif event.key == pygame.K_RIGHT:
+                    gs.goForthMove()
 
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)

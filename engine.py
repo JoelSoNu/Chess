@@ -13,13 +13,28 @@ class GameState():
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         self.whiteToMove = True
         self.moveLog = []
+        self.undoneMoves = []
 
+    #bugs
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move) #append the move so it can be undone later
         self.whiteToMove = not self.whiteToMove #swap players
 
+    def goBackMove(self):
+        if len(self.moveLog) > 0:
+            move = self.moveLog.pop()
+            self.undoneMoves.append(move)
+            self.board[move.startRow][move.startCol] = move.pieceMoved
+            self.board[move.endRow][move.endCol] = move.pieceCaptured
+            self.whiteToMove = not self.whiteToMove  # swap players
+
+    def goForthMove(self):
+        if len(self.undoneMoves) > 0:
+            move = self.undoneMoves.pop()
+            self.moveLog.append(move)
+            self.makeMove(move)
 
 class Move():
     rowNotation = {"1": 7, "2": 6, "3": 5, "4": 4,
@@ -35,7 +50,7 @@ class Move():
         self.endRow = endSq[1]
         self.endCol = endSq[0]
         self.pieceMoved = board[self.startRow][self.startCol]
-        self.pieceCaptured = board[self.endRow][self.startCol]
+        self.pieceCaptured = board[self.endRow][self.endCol]
 
     def getChessNotation(self):
         return self.getSquare(self.startRow, self.startCol) + self.getSquare(self.endRow, self.endCol)
