@@ -52,7 +52,6 @@ def main():
                     playerClicks.append(sqSelected) #append 1st and 2nd clicks
                 if len(playerClicks) == 2:
                     move = engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    print(move.getChessNotation())
                     gs.makeMove(move)
                     sqSelected = () #reset user clicks
                     playerClicks = []
