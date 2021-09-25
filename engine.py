@@ -97,14 +97,7 @@ class GameState():
         enemyColor = "b" if self.whiteToMove else "w"
         knightJumps = [(2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1)]
         for row in knightJumps:
-            self.getKnightJump(r, c, moves, movesID, row[0], row[1], enemyColor)
-
-    def getKnightJump(self, r, c, moves, movesID, x, y, enemyColor):
-        if 0 <= r+x <= 7 and 0 <= c+y <= 7:
-            if self.board[r+x][c+y] == "--" or self.board[r+x][c+y][0] == enemyColor:
-                move = Move((c, r), (c+y, r+x), self.board)
-                moves.append(move)
-                movesID.append(move.moveID)
+            self.getMove(r, c, moves, movesID, row[0], row[1], enemyColor)
 
     def bishopMoves(self, r, c, moves, movesID):
         enemyColor = "b" if self.whiteToMove else "w"
@@ -126,15 +119,42 @@ class GameState():
                     else: #Friendly piece
                         break
 
-
     def rockMoves(self, r, c, moves, movesID):
-        pass
+        enemyColor = "b" if self.whiteToMove else "w"
+        directions = [(1, 0), (0, -1), (-1, 0), (0, 1)]
+        for dir in directions:
+            for i in range(1, 8):
+                endRow = r + dir[0] * i if dir[0] != 0 else r
+                endCol = c + dir[1] * i if dir[1] != 0 else c
+                if 0 <= endRow <= 7 and 0 <= endCol <= 7:
+                    if self.board[endRow][endCol] == "--":
+                        move = Move((c, r), (endCol, endRow), self.board)
+                        moves.append(move)
+                        movesID.append(move.moveID)
+                    elif self.board[endRow][endCol][0] == enemyColor:
+                        move = Move((c, r), (endCol, endRow), self.board)
+                        moves.append(move)
+                        movesID.append(move.moveID)
+                        break
+                    else:  # Friendly piece
+                        break
 
     def queenMoves(self, r, c, moves, movesID):
-        pass
+        self.bishopMoves(r, c, moves, movesID)
+        self.rockMoves(r, c, moves, movesID)
 
     def kingMoves(self, r, c, moves, movesID):
-        pass
+        enemyColor = "b" if self.whiteToMove else "w"
+        kingMoves = [(1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1)]
+        for row in kingMoves:
+            self.getMove(r, c, moves, movesID, row[0], row[1], enemyColor)
+
+    def getMove(self, r, c, moves, movesID, x, y, enemyColor):
+        if 0 <= r+x <= 7 and 0 <= c+y <= 7:
+            if self.board[r+x][c+y] == "--" or self.board[r+x][c+y][0] == enemyColor:
+                move = Move((c, r), (c+y, r+x), self.board)
+                moves.append(move)
+                movesID.append(move.moveID)
 
     def notIllegalMove(self, move):
         if move.pieceCaptured[1] == "K":
