@@ -62,10 +62,24 @@ def main():
                     gs.goForthMove()
 
         drawGameState(screen, gs)
+        if len(playerClicks) == 1:
+            color = "w" if gs.whiteToMove else "b"
+            if gs.board[col][row][0] == color:
+                highlightMoves(screen, gs, row, col)
         clock.tick(MAX_FPS)
         pygame.display.flip()
     pygame.quit()
 
+def highlightMoves(screen, gs, row, col):
+    moves, movesID = gs.possiblePieceMoves(col, row)
+    s = pygame.Surface((SQ_SIZE, SQ_SIZE))
+    s.set_alpha(100)  # transparency value -> 0 transparent, 255 opaque
+    s.fill(pygame.Color("blue"))
+    screen.blit(s, (row * SQ_SIZE, col * SQ_SIZE))
+    s.fill(pygame.Color("yellow"))
+    for move in moves:
+        if move.startCol == row and move.startRow == col:
+            screen.blit(s, (move.endCol * SQ_SIZE, move.endRow * SQ_SIZE))
 
 def drawGameState(screen, gs):
     drawBoard(screen)

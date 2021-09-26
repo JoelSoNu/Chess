@@ -19,7 +19,7 @@ class GameState():
 
     #bugs
     def makeMove(self, move):
-        moves, movesID = self.possibleMoves()
+        moves, movesID = self.allPossibleMoves()
         print(movesID)
         if move.moveID in movesID:
             print(move.getChessNotation())
@@ -42,7 +42,7 @@ class GameState():
             self.moveLog.append(move)
             self.makeMove(move)
 
-    def possibleMoves(self):
+    def allPossibleMoves(self):
         moves = []
         movesID = []
         for r in range(len(self.board)):
@@ -51,6 +51,15 @@ class GameState():
                 if(player == "w" and self.whiteToMove) or (player == "b" and not self.whiteToMove):
                     piece = self.board[r][c][1]
                     self.moveFunctions[piece](r, c, moves, movesID)
+        return moves, movesID
+
+    def possiblePieceMoves(self, r, c):
+        moves = []
+        movesID = []
+        player = self.board[r][c][0]
+        if (player == "w" and self.whiteToMove) or (player == "b" and not self.whiteToMove):
+            piece = self.board[r][c][1]
+            self.moveFunctions[piece](r, c, moves, movesID)
         return moves, movesID
 
     def pawnMoves(self, r, c, moves, movesID):
@@ -96,8 +105,8 @@ class GameState():
     def knightMoves(self, r, c, moves, movesID):
         enemyColor = "b" if self.whiteToMove else "w"
         knightJumps = [(2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1)]
-        for row in knightJumps:
-            self.getMove(r, c, moves, movesID, row[0], row[1], enemyColor)
+        for jump in knightJumps:
+            self.getMove(r, c, moves, movesID, jump[0], jump[1], enemyColor)
 
     def bishopMoves(self, r, c, moves, movesID):
         enemyColor = "b" if self.whiteToMove else "w"
@@ -146,8 +155,8 @@ class GameState():
     def kingMoves(self, r, c, moves, movesID):
         enemyColor = "b" if self.whiteToMove else "w"
         kingMoves = [(1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1)]
-        for row in kingMoves:
-            self.getMove(r, c, moves, movesID, row[0], row[1], enemyColor)
+        for move in kingMoves:
+            self.getMove(r, c, moves, movesID, move[0], move[1], enemyColor)
 
     def getMove(self, r, c, moves, movesID, x, y, enemyColor):
         if 0 <= r+x <= 7 and 0 <= c+y <= 7:
