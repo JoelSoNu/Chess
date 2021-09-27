@@ -26,26 +26,28 @@ class GameState():
         if move.moveID in movesID and not self.undoneMoves:
             print(move.getChessNotation())
             self.movePiece(move)
-            if move.pieceMoved[1] == "K":
-                self.chageKingLocation(move)
 
-    def chageKingLocation(self, move):
+    def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":
-            self.whiteKingLocation = (move.endCol, move.endRow)
+            self.whiteKingLocation = (col, row)
         elif move.pieceMoved[0] == "b":
-            self.blackKingLocation = (move.endCol, move.endRow)
+            self.blackKingLocation = (col, row)
 
     def movePiece(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)  # append the move so it can be undone later
         self.whiteToMove = not self.whiteToMove  # swap players
+        if move.pieceMoved[1] == "K":
+            self.changeKingLocation(move, move.endCol, move.endRow)
 
     def undoMove(self):
         move = self.moveLog.pop()
         self.board[move.startRow][move.startCol] = move.pieceMoved
         self.board[move.endRow][move.endCol] = move.pieceCaptured
         self.whiteToMove = not self.whiteToMove  # swap players
+        if move.pieceMoved[1] == "K":
+            self.changeKingLocation(move, move.startCol, move.startRow)
 
     def goBackMove(self):
         if len(self.moveLog) > 0:
@@ -187,10 +189,6 @@ class GameState():
                 move = Move((c, r), (c+y, r+x), self.board)
                 moves.append(move)
                 movesID.append(move.moveID)
-                '''if enemyColor == "b":
-                    self.whiteKingLocation = tuple(sum(i) for i in zip(self.whiteKingLocation, (x, y)))
-                else:
-                    self.blackKingLocation = tuple(sum(i) for i in zip(self.blackKingLocation, (x, y)))'''
 
     def inCheck(self):
         if self.whiteToMove:
@@ -209,6 +207,7 @@ class GameState():
 
     def getValidMoves(self):
         moves, movesID = self.allPossibleMoves()
+        # check that your king is not in check
         for i in range(len(moves)-1, -1, -1): #when removing from a list go backwards through that list
             self.movePiece(moves[i])
             self.whiteToMove = not self.whiteToMove
@@ -217,6 +216,13 @@ class GameState():
                 movesID.remove(movesID[i])
             self.whiteToMove = not self.whiteToMove
             self.undoMove()
+        # check that when you moved enemy can't capture king
+        '''for j in range(len(moves) - 1, -1, -1):
+            self.movePiece(moves[j])
+            if self.inCheck():
+                moves.remove(moves[j])
+                movesID.remove(movesID[j])
+            self.undoMove()'''
         return moves, movesID
 
     def isValidMove(self, move):
