@@ -14,19 +14,38 @@ class GameState():
         self.whiteToMove = True
         self.moveLog = []
         self.undoneMoves = []
+        self.whiteKingLocation = (4, 7)
+        self.blackKingLocation = (4, 0)
         self.moveFunctions = {'p': self.pawnMoves, 'N': self.knightMoves, 'B': self.bishopMoves,
                               'R': self.rockMoves, 'Q': self.queenMoves, 'K': self.kingMoves}
 
     #bugs
     def makeMove(self, move):
-        moves, movesID = self.allPossibleMoves()
+        moves, movesID = self.getValidMoves()
         print(movesID)
-        if move.moveID in movesID:
+        if move.moveID in movesID and not self.undoneMoves:
             print(move.getChessNotation())
-            self.board[move.startRow][move.startCol] = "--"
-            self.board[move.endRow][move.endCol] = move.pieceMoved
-            self.moveLog.append(move) #append the move so it can be undone later
-            self.whiteToMove = not self.whiteToMove #swap players
+            self.movePiece(move)
+            if move.pieceMoved[1] == "K":
+                self.chageKingLocation(move)
+
+    def chageKingLocation(self, move):
+        if move.pieceMoved[0] == "w":
+            self.whiteKingLocation = (move.endCol, move.endRow)
+        elif move.pieceMoved[0] == "b":
+            self.blackKingLocation = (move.endCol, move.endRow)
+
+    def movePiece(self, move):
+        self.board[move.startRow][move.startCol] = "--"
+        self.board[move.endRow][move.endCol] = move.pieceMoved
+        self.moveLog.append(move)  # append the move so it can be undone later
+        self.whiteToMove = not self.whiteToMove  # swap players
+
+    def undoMove(self):
+        move = self.moveLog.pop()
+        self.board[move.startRow][move.startCol] = move.pieceMoved
+        self.board[move.endRow][move.endCol] = move.pieceCaptured
+        self.whiteToMove = not self.whiteToMove  # swap players
 
     def goBackMove(self):
         if len(self.moveLog) > 0:
@@ -34,13 +53,13 @@ class GameState():
             self.undoneMoves.append(move)
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
-            self.whiteToMove = not self.whiteToMove  # swap players
 
     def goForthMove(self):
         if len(self.undoneMoves) > 0:
             move = self.undoneMoves.pop()
             self.moveLog.append(move)
-            self.makeMove(move)
+            self.board[move.startRow][move.startCol] = "--"
+            self.board[move.endRow][move.endCol] = move.pieceMoved
 
     def allPossibleMoves(self):
         moves = []
@@ -60,6 +79,10 @@ class GameState():
         if (player == "w" and self.whiteToMove) or (player == "b" and not self.whiteToMove):
             piece = self.board[r][c][1]
             self.moveFunctions[piece](r, c, moves, movesID)
+        for i in range(len(moves)-1, -1, -1): #when removing from a list go backwards through that list:
+            if not self.isValidMove(moves[i]):
+                moves.remove(moves[i])
+                movesID.remove(movesID[i])
         return moves, movesID
 
     def pawnMoves(self, r, c, moves, movesID):
@@ -164,18 +187,45 @@ class GameState():
                 move = Move((c, r), (c+y, r+x), self.board)
                 moves.append(move)
                 movesID.append(move.moveID)
+                '''if enemyColor == "b":
+                    self.whiteKingLocation = tuple(sum(i) for i in zip(self.whiteKingLocation, (x, y)))
+                else:
+                    self.blackKingLocation = tuple(sum(i) for i in zip(self.blackKingLocation, (x, y)))'''
 
-    def notIllegalMove(self, move):
-        if move.pieceCaptured[1] == "K":
-            return False
-        #boardCopy = self.board
-        #boardCopy[move.startRow][move.startCol] = "--"
-        #boardCopy[move.endRow][move.endCol] = move.pieceMoved
-        #moves, movesID = self.possibleMoves(boardCopy)
-        #for move in moves:
-         #   if move.pieceCaptured[1] == "K":
-          #      return False
-        return True
+    def inCheck(self):
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+        else:
+            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+
+    def squareUnderAttack(self, row, col):
+        self.whiteToMove = not self.whiteToMove #switch to opponent's turn
+        oppMoves, oppMovesID = self.allPossibleMoves()
+        self.whiteToMove = not self.whiteToMove #switch back the turns
+        for move in oppMoves:
+            if move.endCol == row and move.endRow == col:
+                return True
+        return False
+
+    def getValidMoves(self):
+        moves, movesID = self.allPossibleMoves()
+        for i in range(len(moves)-1, -1, -1): #when removing from a list go backwards through that list
+            self.movePiece(moves[i])
+            self.whiteToMove = not self.whiteToMove
+            if self.inCheck():
+                moves.remove(moves[i])
+                movesID.remove(movesID[i])
+            self.whiteToMove = not self.whiteToMove
+            self.undoMove()
+        return moves, movesID
+
+    def isValidMove(self, move):
+        moves, movesID = self.getValidMoves()
+        for id in movesID:
+            if move.moveID == id:
+                return True
+        return False
+
 
 class Move():
     rowNotation = {"1": 7, "2": 6, "3": 5, "4": 4,
