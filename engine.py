@@ -207,7 +207,7 @@ class GameState():
 
     def getValidMoves(self):
         moves, movesID = self.allPossibleMoves()
-        # check that your king is not in check in next move7
+        # check that your king is not in check in next move
         for i in range(len(moves)-1, -1, -1): #when removing from a list go backwards through that list
             self.movePiece(moves[i])
             self.whiteToMove = not self.whiteToMove
