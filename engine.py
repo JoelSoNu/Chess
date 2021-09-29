@@ -236,51 +236,50 @@ class GameState():
 
     def inCheck(self):
         if self.whiteToMove:
-            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+            return self.squareUnderAttack(self.whiteKingLocation[1], self.whiteKingLocation[0])
         else:
-            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+            return self.squareUnderAttack(self.blackKingLocation[1], self.blackKingLocation[0])
 
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
         oppMoves, oppMovesID = self.allPossibleMoves()
         self.whiteToMove = not self.whiteToMove #switch back the turns
         for move in oppMoves:
-            if move.endCol == row and move.endRow == col:
+            if move.endCol == col and move.endRow == row:
                 return True
         return False
 
     def canCastle(self, move):
-        if move.pieceMoved[0] == "w" and not self.castledWhite:
+        if move.pieceMoved[0] == "w": #and not self.castledWhite:
             if move.startRow == 7 and move.startCol == 4:
                 if move.endRow == 7 and move.endCol == 6:
                     if self.board[7][5] == "--" and self.board[7][6] == "--":
                         if not self.inCheck() and not self.squareUnderAttack(7, 5) and not self.squareUnderAttack(7, 6):
                             return self.castlingRights.wKs
                 if move.endRow == 7 and move.endCol == 2:
-                    if self.board[7][3] == "--" and self.board[7][2] == "--" and self.board[7][1]:
+                    if self.board[7][3] == "--" and self.board[7][2] == "--" and self.board[7][1] == "--":
                         if not self.inCheck() and not self.squareUnderAttack(7, 3) and not self.squareUnderAttack(7, 2):
                             return self.castlingRights.wQs
-        if move.pieceMoved[0] == "b" and not self.castledBlack:
+        if move.pieceMoved[0] == "b": #and not self.castledBlack:
             if move.startRow == 0 and move.startCol == 4:
                 if move.endRow == 0 and move.endCol == 6:
                     if self.board[0][5] == "--" and self.board[0][6] == "--":
                         if not self.inCheck() and not self.squareUnderAttack(0, 5) and not self.squareUnderAttack(0, 6):
                             return self.castlingRights.bKs
                 if move.endRow == 0 and move.endCol == 2:
-                    if self.board[0][3] == "--" and self.board[0][2] == "--" and self.board[0][1]:
+                    if self.board[0][3] == "--" and self.board[0][2] == "--" and self.board[0][1] == "--":
                         if not self.inCheck() and not self.squareUnderAttack(0, 3) and not self.squareUnderAttack(0, 2):
                             return self.castlingRights.bQs
         return False
 
     def getValidMoves(self):
         moves, movesID = self.allPossibleMoves()
-        # check that your king is not in check in next move
         for i in range(len(moves)-1, -1, -1): #when removing from a list go backwards through that list
             if moves[i].isCastleMove:
                 if not self.canCastle(moves[i]):
                     moves.remove(moves[i])
                     movesID.remove(movesID[i])
-            #checks
+            # check that your king is not in check in next move
             self.movePiece(moves[i])
             self.whiteToMove = not self.whiteToMove
             if self.inCheck():
