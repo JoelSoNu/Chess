@@ -25,8 +25,15 @@ class GameState():
         moves, movesID = self.getValidMoves()
         print(movesID)
         if move.moveID in movesID and not self.undoneMoves:
-            print(move.getChessNotation())
+            move.isCastleMove = self.isCastleMove(move, moves)
+            print(move.moveID)
             self.movePiece(move)
+
+    def isCastleMove(self, move, moves):
+        for i in range(len(moves) - 1, -1, -1):
+            if move.moveID == moves[i].moveID:
+                return moves[i].isCastleMove
+        return False
 
     def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":
@@ -64,6 +71,8 @@ class GameState():
             self.undoneMoves.append(move)
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
+            if move.isCastleMove:
+                self.undoCastling(move.startRow, move.startCol, (move.endCol - move.startCol) // 2, move, move.pieceMoved[0])
 
     def goForthMove(self):
         if len(self.undoneMoves) > 0:
@@ -71,6 +80,8 @@ class GameState():
             self.moveLog.append(move)
             self.board[move.startRow][move.startCol] = "--"
             self.board[move.endRow][move.endCol] = move.pieceMoved
+            if move.isCastleMove:
+                self.doCastling(move.startRow, move.startCol, (move.endCol - move.startCol) // 2, move, move.pieceMoved[0])
 
     def allPossibleMoves(self):
         moves = []
@@ -244,8 +255,6 @@ class GameState():
 
     def canCastle(self, move):
         castlingRights = self.castlingRightsLog[-1]
-        print(castlingRights.wKs)
-        print(len(self.castlingRightsLog))
         if move.pieceMoved[0] == "w":
             if move.startRow == 7 and move.startCol == 4:
                 if move.endRow == 7 and move.endCol == 6:
