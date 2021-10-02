@@ -21,6 +21,7 @@ class GameState():
         self.moveFunctions = {'p': self.pawnMoves, 'N': self.knightMoves, 'B': self.bishopMoves,
                               'R': self.rockMoves, 'Q': self.queenMoves, 'K': self.kingMoves}
         self.castlingRightsLog = [Castling(True, True, True, True)]
+        self.totalPos = 1
 
     #bugs
     def makeMove(self, move):
@@ -224,7 +225,6 @@ class GameState():
 
 
     def doPromotion(self, move):
-        print(move.piecePromoted)
         self.board[move.endRow][move.endCol] = move.piecePromoted
 
     def getPassantMoves(self, r, c, moves, movesID):
@@ -424,6 +424,14 @@ class GameState():
                 castlingRights.bQs = False
         self.castlingRightsLog.append(castlingRights)
 
+    '''def countPositions(self):
+        moves, movesID = self.getValidMoves()
+        for move in moves:
+            self.movePiece(move)
+            nextMoves, nextMovesID = self.getValidMoves()
+            self.totalPos += len(nextMoves)
+            self.undoMove()
+        print(self.totalPos)'''
 
 class Castling():
     def __init__(self, wKs, wQs, bKs, bQs):
