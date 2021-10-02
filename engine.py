@@ -424,14 +424,19 @@ class GameState():
                 castlingRights.bQs = False
         self.castlingRightsLog.append(castlingRights)
 
-    '''def countPositions(self):
-        moves, movesID = self.getValidMoves()
-        for move in moves:
-            self.movePiece(move)
-            nextMoves, nextMovesID = self.getValidMoves()
-            self.totalPos += len(nextMoves)
-            self.undoMove()
-        print(self.totalPos)'''
+    ''' BUGS '''
+    def countPositions(self, depth):
+        if depth == 0:
+            return 1
+        else:
+            moves, movesID = self.getValidMoves()
+            totalPos = 0
+            for move in moves:
+                self.movePiece(move)
+                self.totalPos += self.countPositions(depth - 1)
+                self.undoMove()
+        print(depth)
+        return totalPos
 
 class Castling():
     def __init__(self, wKs, wQs, bKs, bQs):
