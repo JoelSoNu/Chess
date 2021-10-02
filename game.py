@@ -52,6 +52,7 @@ def main():
                     playerClicks.append(sqSelected) #append 1st and 2nd clicks
                 if len(playerClicks) == 2:
                     move = engine.Move(playerClicks[0], playerClicks[1], gs.board)
+                    #print(gs.countPositions(5)) #with 5 fails (list index out of range in getValidMoves)
                     gs.makeMove(move)
                     sqSelected = () #reset user clicks
                     playerClicks = []

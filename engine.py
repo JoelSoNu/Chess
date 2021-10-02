@@ -21,7 +21,6 @@ class GameState():
         self.moveFunctions = {'p': self.pawnMoves, 'N': self.knightMoves, 'B': self.bishopMoves,
                               'R': self.rockMoves, 'Q': self.queenMoves, 'K': self.kingMoves}
         self.castlingRightsLog = [Castling(True, True, True, True)]
-        self.totalPos = 1
 
     #bugs
     def makeMove(self, move):
@@ -387,14 +386,15 @@ class GameState():
                 if not self.canCastle(moves[i]):
                     moves.remove(moves[i])
                     movesID.remove(movesID[i])
-            # check that your king is not in check in next move
-            self.movePiece(moves[i])
-            self.whiteToMove = not self.whiteToMove
-            if self.inCheck():
-                moves.remove(moves[i])
-                movesID.remove(movesID[i])
-            self.whiteToMove = not self.whiteToMove
-            self.undoMove()
+            else:
+                # check that your king is not in check in next move
+                self.movePiece(moves[i])
+                self.whiteToMove = not self.whiteToMove
+                if self.inCheck():
+                    moves.remove(moves[i])
+                    movesID.remove(movesID[i])
+                self.whiteToMove = not self.whiteToMove
+                self.undoMove()
         return moves, movesID
 
     def isValidMove(self, move):
@@ -428,14 +428,12 @@ class GameState():
     def countPositions(self, depth):
         if depth == 0:
             return 1
-        else:
-            moves, movesID = self.getValidMoves()
-            totalPos = 0
-            for move in moves:
-                self.movePiece(move)
-                self.totalPos += self.countPositions(depth - 1)
-                self.undoMove()
-        print(depth)
+        moves, movesID = self.getValidMoves()
+        totalPos = 0
+        for move in moves:
+            self.movePiece(move)
+            totalPos += self.countPositions(depth - 1)
+            self.undoMove()
         return totalPos
 
 class Castling():
