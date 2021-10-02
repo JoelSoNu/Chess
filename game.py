@@ -36,7 +36,7 @@ def main():
     running = True
     sqSelected = ()
     playerClicks = []
-    while (running):
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -86,7 +86,6 @@ def drawGameState(screen, gs):
     #add piece move highlight
     drawPieces(screen, gs.board)
 
-
 def drawBoard(screen):
     colors = [pygame.Color("white"), pygame.Color("gray")]
     for r in range(DIMENSION):
@@ -94,14 +93,12 @@ def drawBoard(screen):
             color = colors[(r+c) % 2]
             pygame.draw.rect(screen, color, pygame.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
-
 def drawPieces(screen, board):
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             piece = board[r][c]
             if piece != "--":
                 screen.blit(IMAGES[piece], pygame.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,7 @@
 #!/bin/env python3
 
+import pygame
+
 class GameState():
     def __init__(self):
         self.board = [
@@ -27,6 +29,9 @@ class GameState():
         if move.moveID in movesID and not self.undoneMoves:
             move.isCastleMove = self.isCastleMove(move, moves)
             move.isEnPassantMove = self.isPassantMove(move, moves)
+            move.isPromotionMove = self.isPromotionMove(move, moves)
+            if move.isPromotionMove:
+                move.piecePromoted = move.pieceMoved[0] + self.pickPromotionPiece()
             print(move.moveID)
             self.movePiece(move)
 
@@ -41,6 +46,32 @@ class GameState():
             if move.moveID == moves[i].moveID:
                 return moves[i].isEnPassantMove
         return False
+
+    def isPromotionMove(self, move, moves):
+        for i in range(len(moves) - 1, -1, -1):
+            if move.moveID == moves[i].moveID:
+                return moves[i].isPromotionMove
+        return False
+
+    def pickPromotionPiece(self):
+        picked = False
+        piece = "p"
+        while not picked:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        piece = "Q"
+                        picked = True
+                    elif event.key == pygame.K_r:
+                        piece = "R"
+                        picked = True
+                    elif event.key == pygame.K_b:
+                        piece = "B"
+                        picked = True
+                    elif event.key == pygame.K_n:
+                        piece = "N"
+                        picked = True
+        return piece
 
     def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":
@@ -61,6 +92,8 @@ class GameState():
             self.updateCastlingRights(move)
         if move.isEnPassantMove:
             self.doPassant(move)
+        if move.isPromotionMove:
+            self.doPromotion(move)
 
     def undoMove(self):
         move = self.moveLog.pop()
@@ -97,6 +130,8 @@ class GameState():
                 self.doCastling(move.startRow, move.startCol, (move.endCol - move.startCol) // 2, move, move.pieceMoved[0])
             if move.isEnPassantMove:
                 self.doPassant(move)
+            if move.isPromotionMove:
+                self.doPromotion(move)
 
     def allPossibleMoves(self):
         moves = []
@@ -128,6 +163,8 @@ class GameState():
                 move = Move((c, r), (c, r-1), self.board)
                 moves.append(move)
                 movesID.append(move.moveID)
+                if move.endRow == 0:
+                    self.getPromotionMoves(r, c, moves, movesID, "w")
                 if r == 6 and self.board[r-2][c] == "--":
                     move = Move((c, r), (c, r-2), self.board)
                     moves.append(move)
@@ -137,11 +174,15 @@ class GameState():
                     move = Move((c, r), (c-1, r-1), self.board)
                     moves.append(move)
                     movesID.append(move.moveID)
+                    if move.endRow == 0:
+                        self.getPromotionMoves(r, c, moves, movesID, "w")
             if c + 1 <= 7:  # capture to left
                 if self.board[r-1][c+1][0] == "b":  # enemy to capture
                     move = Move((c, r), (c+1, r-1), self.board)
                     moves.append(move)
                     movesID.append(move.moveID)
+                    if move.endRow == 0:
+                        self.getPromotionMoves(r, c, moves, movesID, "w")
             if r == 3:
                 self.getPassantMoves(r, c, moves, movesID)
         else: #black pawn moves
@@ -149,6 +190,8 @@ class GameState():
                 move = Move((c, r), (c, r+1), self.board)
                 moves.append(move)
                 movesID.append(move.moveID)
+                if move.endRow == 7:
+                    self.getPromotionMoves(r, c, moves, movesID, "b")
                 if r == 1 and self.board[r+2][c] == "--":
                     move = Move((c, r), (c, r+2), self.board)
                     moves.append(move)
@@ -158,13 +201,31 @@ class GameState():
                     move = Move((c, r), (c-1, r+1), self.board)
                     moves.append(move)
                     movesID.append(move.moveID)
+                    if move.endRow == 7:
+                        self.getPromotionMoves(r, c, moves, movesID, "b")
             if c + 1 <= 7:  # capture to left
                 if self.board[r+1][c+1][0] == "w":  # enemy to capture
                     move = Move((c, r), (c+1, r+1), self.board)
                     moves.append(move)
                     movesID.append(move.moveID)
+                    if move.endRow == 7:
+                        self.getPromotionMoves(r, c, moves, movesID, "b")
             if r == 4:
                 self.getPassantMoves(r, c, moves, movesID)
+
+    def getPromotionMoves(self, r, c, moves, movesID, color):
+        move = moves.pop()
+        movesID.pop()
+        possiblePieces = ["N", "B", "R", "Q"]
+        for piece in possiblePieces:
+            promotionMove = Move((c, r), (move.endCol, move.endRow), self.board, False, False, True, color + piece)
+            moves.append(promotionMove)
+            movesID.append(promotionMove.moveID)
+
+
+    def doPromotion(self, move):
+        print(move.piecePromoted)
+        self.board[move.endRow][move.endCol] = move.piecePromoted
 
     def getPassantMoves(self, r, c, moves, movesID):
         lastMove = self.moveLog[-1]  #will not be empty
@@ -379,7 +440,7 @@ class Move():
                    "e": 4, "f": 5, "g": 6, "h": 7}
     colsToNotation = {v: k for k, v in colNotation.items()}
 
-    def __init__(self, startSq, endSq, board, isCastle = False, isEnPassant = False):
+    def __init__(self, startSq, endSq, board, isCastle = False, isEnPassant = False, isPromotion = False, piecePromoted = "--"):
         self.startRow = startSq[1]
         self.startCol = startSq[0]
         self.endRow = endSq[1]
@@ -389,6 +450,8 @@ class Move():
         self.moveID = self.getChessNotation()
         self.isCastleMove = isCastle
         self.isEnPassantMove = isEnPassant
+        self.isPromotionMove = isPromotion
+        self.piecePromoted = piecePromoted
 
     def getChessNotation(self):
         return self.getSquare(self.startRow, self.startCol) + self.getSquare(self.endRow, self.endCol)
