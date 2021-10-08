@@ -39,7 +39,7 @@ def main():
     running = True
     stopGame = False
     playerWhite = "random"
-    playerBlack = "human"
+    playerBlack = "random"
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -49,11 +49,11 @@ def main():
                     gs.goBackMove()
                 elif event.key == pygame.K_RIGHT:
                     gs.goForthMove()
-            elif gs.inCheckMate():
+            elif gs.inCheckMate():  # Checkmate
                 winner = "BLACK WINS" if gs.whiteToMove else "WHITE WINS"
                 pygame.display.set_caption(winner)
                 stopGame = True
-            elif gs.notMoreMoves() and not gs.inCheck():
+            elif gs.notMoreMoves() and not gs.inCheck():  # Stalemate
                 pygame.display.set_caption("DRAW")
                 stopGame = True
             elif gs.whiteToMove and not stopGame:
@@ -68,6 +68,7 @@ def main():
 def humanPlay(gs):
     sqSelected = ()
     playerClicks = []
+    col = row = 0
     moved = False
     while not moved:
         for event in pygame.event.get():
