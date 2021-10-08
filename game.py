@@ -17,6 +17,8 @@ DIMENSION = 8  #dimension of chess board is 8x8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 30
 IMAGES = {}
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
 
 
 def loadImages():
@@ -28,16 +30,16 @@ def loadImages():
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    clock = pygame.time.Clock()
+    #screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    #clock = pygame.time.Clock()
     screen.fill(pygame.Color('white'))
     gs = engine.GameState()
     loadImages()
     pygame.display.set_caption("Chess board")
     running = True
-    sqSelected = ()
-    playerClicks = []
     stopGame = False
+    playerWhite = "random"
+    playerBlack = "human"
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -54,28 +56,44 @@ def main():
             elif gs.notMoreMoves() and not gs.inCheck():
                 pygame.display.set_caption("DRAW")
                 stopGame = True
-            elif event.type == pygame.MOUSEBUTTONDOWN and gs.whiteToMove and not stopGame:
+            elif gs.whiteToMove and not stopGame:
+                PLAYERS[playerWhite](gs)
+            elif not gs.whiteToMove and not stopGame:
+                PLAYERS[playerBlack](gs)
+        drawGameState(screen, gs)
+        clock.tick(MAX_FPS)
+        pygame.display.flip()
+    pygame.quit()
+
+def humanPlay(gs):
+    sqSelected = ()
+    playerClicks = []
+    moved = False
+    while not moved:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    gs.goBackMove()
+                elif event.key == pygame.K_RIGHT:
+                    gs.goForthMove()
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 location = pygame.mouse.get_pos()
-                row = location[0]//SQ_SIZE
-                col = location[1]//SQ_SIZE
-                if sqSelected == (row, col): #same square selected
-                    sqSelected = () #deselect
-                    playerClicks = [] #clearPlayerClicks
+                row = location[0] // SQ_SIZE
+                col = location[1] // SQ_SIZE
+                if sqSelected == (row, col):  # same square selected
+                    sqSelected = ()  # deselect
+                    playerClicks = []  # clearPlayerClicks
                 else:
                     sqSelected = (row, col)
-                    playerClicks.append(sqSelected) #append 1st and 2nd clicks
+                    playerClicks.append(sqSelected)  # append 1st and 2nd clicks
                 if len(playerClicks) == 2:
                     move = engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    #print(gs.countPositions(5)) #with 5 fails (list index out of range in getValidMoves)
                     gs.makeMove(move)
-                    sqSelected = () #reset user clicks
-                    playerClicks = []
-            elif not gs.whiteToMove and not stopGame:
-                moves, movesID = gs.getValidMoves()
-                move = moves[random.randint(0, len(moves) - 1)]
-                gs.makeMove(move)
-
-
+                    #sqSelected = ()  # reset user clicks
+                    #playerClicks = []
+                    moved = True
         drawGameState(screen, gs)
         if len(playerClicks) == 1:
             color = "w" if gs.whiteToMove else "b"
@@ -83,7 +101,13 @@ def main():
                 highlightMoves(screen, gs, row, col)
         clock.tick(MAX_FPS)
         pygame.display.flip()
-    pygame.quit()
+
+def randomPlay(gs):
+    moves, movesID = gs.getValidMoves()
+    move = moves[random.randint(0, len(moves) - 1)]
+    gs.makeMove(move)
+
+PLAYERS = {"human": humanPlay, "random": randomPlay}
 
 def highlightMoves(screen, gs, row, col):
     moves, movesID = gs.possiblePieceMoves(col, row)
