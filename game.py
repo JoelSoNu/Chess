@@ -5,6 +5,7 @@ import time
 import sys
 import array
 import math
+import random
 
 from PIL import Image
 import matplotlib.image as img
@@ -36,11 +37,24 @@ def main():
     running = True
     sqSelected = ()
     playerClicks = []
+    stopGame = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    gs.goBackMove()
+                elif event.key == pygame.K_RIGHT:
+                    gs.goForthMove()
+            elif gs.inCheckMate():
+                winner = "BLACK WINS" if gs.whiteToMove else "WHITE WINS"
+                pygame.display.set_caption(winner)
+                stopGame = True
+            elif gs.notMoreMoves() and not gs.inCheck():
+                pygame.display.set_caption("DRAW")
+                stopGame = True
+            elif event.type == pygame.MOUSEBUTTONDOWN and gs.whiteToMove and not stopGame:
                 location = pygame.mouse.get_pos()
                 row = location[0]//SQ_SIZE
                 col = location[1]//SQ_SIZE
@@ -56,11 +70,11 @@ def main():
                     gs.makeMove(move)
                     sqSelected = () #reset user clicks
                     playerClicks = []
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    gs.goBackMove()
-                elif event.key == pygame.K_RIGHT:
-                    gs.goForthMove()
+            elif not gs.whiteToMove and not stopGame:
+                moves, movesID = gs.getValidMoves()
+                move = moves[random.randint(0, len(moves) - 1)]
+                gs.makeMove(move)
+
 
         drawGameState(screen, gs)
         if len(playerClicks) == 1:

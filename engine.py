@@ -346,6 +346,13 @@ class GameState():
         else:
             return self.squareUnderAttack(self.blackKingLocation[1], self.blackKingLocation[0])
 
+    def inCheckMate(self):
+        return self.inCheck() and self.notMoreMoves()
+
+    def notMoreMoves(self):
+        moves, movesID = self.getValidMoves()
+        return not moves
+
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
         oppMoves, oppMovesID = self.allPossibleMoves()
