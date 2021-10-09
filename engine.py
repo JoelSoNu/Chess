@@ -27,6 +27,11 @@ class GameState():
     def boardCopy(self):
         return [x[:] for x in self.board]
 
+    def piecesInBoard(self):
+        pieces = [piece for row in self.board for piece in row]
+        pieces = list(filter(("--").__ne__, pieces))
+        return pieces
+
     #bugs
     def makeMove(self, move):
         moves, movesID = self.getValidMoves()
@@ -44,6 +49,7 @@ class GameState():
                 self.fiftyMoves = 0
             else:
                 self.fiftyMoves += 1
+            self.piecesInBoard()
 
     def isCastleMove(self, move, moves):
         for i in range(len(moves) - 1, -1, -1):
@@ -371,8 +377,21 @@ class GameState():
                 repeatedTimes += 1  # will be at least 1 cause lastPosition is in boardLog
         return repeatedTimes == 3
 
+    def insufficientMaterial(self):
+        pieces = self.piecesInBoard()
+        if len(pieces) == 2:  # only the two kings are on the board
+            return True
+        elif len(pieces) == 3:
+            piece = "--"
+            for p in range(len(pieces)):
+                if pieces[p][1] != "K":
+                    piece = pieces[p]
+            if piece[1] == "N" or piece[1] == "B":
+                return True
+        return False
+
     def itsDraw(self):
-        return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition() or self.fiftyMoves == 50
+        return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition() or self.fiftyMoves == 50 or self.insufficientMaterial()
 
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
