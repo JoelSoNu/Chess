@@ -38,8 +38,8 @@ def main():
     pygame.display.set_caption("Chess board")
     running = True
     stopGame = False
-    playerWhite = "random"
-    playerBlack = "random"
+    playerWhite = "human"
+    playerBlack = "human"
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -53,7 +53,7 @@ def main():
                 winner = "BLACK WINS" if gs.whiteToMove else "WHITE WINS"
                 pygame.display.set_caption(winner)
                 stopGame = True
-            elif gs.notMoreMoves() and not gs.inCheck():  # Stalemate
+            elif gs.itsDraw():  # Stalemate, Threefold Repetition
                 pygame.display.set_caption("DRAW")
                 stopGame = True
             elif gs.whiteToMove and not stopGame:

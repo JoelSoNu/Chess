@@ -21,6 +21,10 @@ class GameState():
         self.moveFunctions = {'p': self.pawnMoves, 'N': self.knightMoves, 'B': self.bishopMoves,
                               'R': self.rockMoves, 'Q': self.queenMoves, 'K': self.kingMoves}
         self.castlingRightsLog = [Castling(True, True, True, True)]
+        self.boardLog = [self.boardCopy()]
+
+    def boardCopy(self):
+        return [x[:] for x in self.board]
 
     #bugs
     def makeMove(self, move):
@@ -34,6 +38,7 @@ class GameState():
                 move.piecePromoted = move.pieceMoved[0] + self.pickPromotionPiece()
             print(move.moveID)
             self.movePiece(move)
+            self.boardLog.append(self.boardCopy())
 
     def isCastleMove(self, move, moves):
         for i in range(len(moves) - 1, -1, -1):
@@ -352,6 +357,18 @@ class GameState():
     def notMoreMoves(self):
         moves, movesID = self.getValidMoves()
         return not moves
+
+    def threefoldRepetition(self):
+        lastPosition = self.boardLog[-1]
+        repeatedTimes = 0
+        for position in self.boardLog:
+            if lastPosition == position:
+                repeatedTimes += 1  # will be at least 1 cause lastPosition is in boardLog
+        print(repeatedTimes)
+        return repeatedTimes == 3
+
+    def itsDraw(self):
+        return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition()
 
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
