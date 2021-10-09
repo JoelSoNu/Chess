@@ -22,6 +22,7 @@ class GameState():
                               'R': self.rockMoves, 'Q': self.queenMoves, 'K': self.kingMoves}
         self.castlingRightsLog = [Castling(True, True, True, True)]
         self.boardLog = [self.boardCopy()]
+        self.fiftyMoves = 0
 
     def boardCopy(self):
         return [x[:] for x in self.board]
@@ -39,6 +40,10 @@ class GameState():
             print(move.moveID)
             self.movePiece(move)
             self.boardLog.append(self.boardCopy())
+            if move.pieceCaptured != "--" or move.pieceMoved[1] == "p":
+                self.fiftyMoves = 0
+            else:
+                self.fiftyMoves += 1
 
     def isCastleMove(self, move, moves):
         for i in range(len(moves) - 1, -1, -1):
@@ -364,11 +369,10 @@ class GameState():
         for position in self.boardLog:
             if lastPosition == position:
                 repeatedTimes += 1  # will be at least 1 cause lastPosition is in boardLog
-        print(repeatedTimes)
         return repeatedTimes == 3
 
     def itsDraw(self):
-        return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition()
+        return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition() or self.fiftyMoves == 50
 
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
