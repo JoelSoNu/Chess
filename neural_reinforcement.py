@@ -44,11 +44,27 @@ class NetContext():
         self.optimizer = optimizer
         self.lossFunction = lossFunction
 
+    def getQValues(self, gameState, model):
+        inputs = self.convertToTensor(gameState)
+        outputs = model(inputs)
+        return outputs
+
+    def convertToTensor(self, gameState):
+        pass
+        #use moves and convert strings to numbers? a2a4 can be [?, ?, ?, ?]
+        #return torch.tensor(gameState.board, dtype=torch.)
+
     def playTrainingGames(self):
+        # play game
+        # updateTrainingGameover
         pass
 
     def updateTrainingGameover(self):
+        # calls backpropagate
         pass
 
     def backpropagate(self):
+        # net_context.optimizer.zero_grad()
+        # loss.backward()
+        # net_context.optimizer.step()
         pass

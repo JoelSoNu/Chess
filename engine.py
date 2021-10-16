@@ -471,7 +471,7 @@ class GameState():
                 castlingRights.bQs = False
         self.castlingRightsLog.append(castlingRights)
 
-    ''' BUGS '''
+    ''' At depth 5 takes a bit of time '''
     def countPositions(self, depth):
         if depth == 0:
             return 1
@@ -482,6 +482,10 @@ class GameState():
             totalPos += self.countPositions(depth - 1)
             self.undoMove()
         return totalPos
+
+    def getValidMoveIndexes(self):
+        moves, movesID = self.getValidMoves()
+        return [i for i in range(len(moves))]
 
 class Castling():
     def __init__(self, wKs, wQs, bKs, bQs):
