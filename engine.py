@@ -1,6 +1,9 @@
 #!/bin/env python3
 
 import pygame
+import random
+import game
+
 
 class GameState():
     def __init__(self):
@@ -34,14 +37,17 @@ class GameState():
 
     #bugs
     def makeMove(self, move):
+        player = game.playerWhite if self.whiteToMove else game.playerBlack
         moves, movesID = self.getValidMoves()
         print(movesID)
         if move.moveID in movesID and not self.undoneMoves:
             move.isCastleMove = self.isCastleMove(move, moves)
             move.isEnPassantMove = self.isPassantMove(move, moves)
             move.isPromotionMove = self.isPromotionMove(move, moves)
-            if move.isPromotionMove:
+            if move.isPromotionMove and player == "human":
                 move.piecePromoted = move.pieceMoved[0] + self.pickPromotionPiece()
+            elif move.isPromotionMove and player != "human":
+                move.piecePromoted = self.pickPromotionPiece(player)
             print(move.moveID)
             self.movePiece(move)
             self.boardLog.append(self.boardCopy())
@@ -89,6 +95,13 @@ class GameState():
                         picked = True
         return piece
 
+    def pickPromotionPiece(self, player):
+        color = "w" if self.whiteToMove else "b"
+        #if player == "random":
+        piece = ["Q", "N", "B", "R"]
+        return color + piece[random.randint(0, 3)]
+
+
     def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":
             self.whiteKingLocation = (col, row)
@@ -99,13 +112,12 @@ class GameState():
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)  # append the move so it can be undone later
+        self.updateCastlingRights(move)  # store the information about castling rights
         self.whiteToMove = not self.whiteToMove  # swap players
         if move.pieceMoved[1] == "K":
             self.changeKingLocation(move, move.endCol, move.endRow)
         if move.isCastleMove:
             self.doCastling(move.startRow, move.startCol, (move.endCol-move.startCol)//2, move, move.pieceMoved[0])
-        if move.pieceMoved[1] == "K" or move.pieceMoved[1] == "R":
-            self.updateCastlingRights(move)
         if move.isEnPassantMove:
             self.doPassant(move)
         if move.isPromotionMove:
@@ -113,6 +125,7 @@ class GameState():
 
     def undoMove(self):
         move = self.moveLog.pop()
+        self.castlingRightsLog.pop()
         self.board[move.startRow][move.startCol] = move.pieceMoved
         self.board[move.endRow][move.endCol] = move.pieceCaptured
         self.whiteToMove = not self.whiteToMove  # swap players
@@ -120,8 +133,6 @@ class GameState():
             self.changeKingLocation(move, move.startCol, move.startRow)
         if move.isCastleMove:
             self.undoCastling(move.startRow, move.startCol, (move.endCol-move.startCol)//2, move, move.pieceMoved[0])
-        if move.pieceMoved[1] == "K" or move.pieceMoved[1] == "R":
-            self.castlingRightsLog.pop()
         if move.isEnPassantMove:
             self.undoPassant(move)
 
@@ -371,9 +382,10 @@ class GameState():
 
     def threefoldRepetition(self):
         lastPosition = self.boardLog[-1]
+        lastCastleRules = self.castlingRightsLog[-1]
         repeatedTimes = 0
-        for position in self.boardLog:
-            if lastPosition == position:
+        for i in range(len(self.boardLog) - 1):
+            if lastPosition == self.boardLog[i] and lastCastleRules.__dict__ == self.castlingRightsLog[i].__dict__:
                 repeatedTimes += 1  # will be at least 1 cause lastPosition is in boardLog
         return repeatedTimes == 3
 
@@ -487,12 +499,14 @@ class GameState():
         moves, movesID = self.getValidMoves()
         return [i for i in range(len(moves))]
 
+
 class Castling():
     def __init__(self, wKs, wQs, bKs, bQs):
         self.wKs = wKs
         self.wQs = wQs
         self.bKs = bKs
         self.bQs = bQs
+
 
 class Move():
     rowNotation = {"1": 7, "2": 6, "3": 5, "4": 4,

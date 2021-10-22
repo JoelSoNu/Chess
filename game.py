@@ -19,6 +19,8 @@ MAX_FPS = 30
 IMAGES = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
+playerWhite = "random"
+playerBlack = "random"
 
 
 def loadImages():
@@ -38,8 +40,7 @@ def main():
     pygame.display.set_caption("Chess board")
     running = True
     stopGame = False
-    playerWhite = "human"
-    playerBlack = "human"
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
