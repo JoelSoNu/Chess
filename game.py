@@ -19,8 +19,8 @@ MAX_FPS = 30
 IMAGES = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-playerWhite = "human"
-playerBlack = "human"
+playerWhite = "random"
+playerBlack = "random"
 
 
 def loadImages():

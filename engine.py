@@ -33,10 +33,9 @@ class GameState():
 
     def piecesInBoard(self):
         pieces = [piece for row in self.board for piece in row]
-        pieces = list(filter(("--").__ne__, pieces))
+        pieces = list(filter("--".__ne__, pieces))
         return pieces
 
-    #bugs
     def makeMove(self, move):
         player = game.playerWhite if self.whiteToMove else game.playerBlack
         moves, movesID = self.getValidMoves()
