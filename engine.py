@@ -26,6 +26,7 @@ class GameState():
         self.castlingRightsLog = [Castling(True, True, True, True)]
         self.boardLog = [self.boardCopy()]
         self.fiftyMoves = 0
+        self.canKillPassantLog = []
 
     def boardCopy(self):
         return [x[:] for x in self.board]
@@ -41,6 +42,7 @@ class GameState():
         moves, movesID = self.getValidMoves()
         print(movesID)
         if move.moveID in movesID and not self.undoneMoves:
+            self.canKillPassantLog.append(self.canKillPassant(moves))
             move.isCastleMove = self.isCastleMove(move, moves)
             move.isEnPassantMove = self.isPassantMove(move, moves)
             move.isPromotionMove = self.isPromotionMove(move, moves)
@@ -383,10 +385,11 @@ class GameState():
     def threefoldRepetition(self):
         lastPosition = self.boardLog[-1]
         lastCastleRules = self.castlingRightsLog[-1]
-        repeatedTimes = 0
+        repeatedTimes = 1
         for i in range(len(self.boardLog) - 1):
-            if lastPosition == self.boardLog[i] and lastCastleRules.__dict__ == self.castlingRightsLog[i].__dict__:
+            if lastPosition == self.boardLog[i] and lastCastleRules.__dict__ == self.castlingRightsLog[i].__dict__ and not self.canKillPassantLog[i]:
                 repeatedTimes += 1  # will be at least 1 cause lastPosition is in boardLog
+                print(repeatedTimes)
         return repeatedTimes == 3
 
     def insufficientMaterial(self):
@@ -404,6 +407,12 @@ class GameState():
 
     def itsDraw(self):
         return (self.notMoreMoves() and not self.inCheck()) or self.threefoldRepetition() or self.fiftyMoves == 50 or self.insufficientMaterial()
+
+    def canKillPassant(self, moves):
+        for move in moves:
+            if self.isPassantMove(move, moves):
+                return True
+        return False
 
     def squareUnderAttack(self, row, col):
         self.whiteToMove = not self.whiteToMove #switch to opponent's turn
