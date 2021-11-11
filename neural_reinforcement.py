@@ -20,10 +20,11 @@ OUTPUT_SIZE = 1  # dict (moves: q_value)
 
 
 class ChessNet(nn.Module):
-    def __init__(self, game, args):
+    def __init__(self, game, moves, args):
         # game params
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
+        self.actions = moves
         self.args = args
 
         super(ChessNet, self).__init__()
