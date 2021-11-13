@@ -3,6 +3,7 @@
 import pygame
 import random
 import game
+import numpy as np
 
 
 class GameState():
@@ -35,6 +36,18 @@ class GameState():
         pieces = [piece for row in self.board for piece in row]
         pieces = list(filter("--".__ne__, pieces))
         return pieces
+
+    def piecesAsNumbers(self):
+        mapBoard = {"wp": 1, "wN": 2, "wB": 3, "wR": 4, "wQ": 5, "wK": 6, "bp": -1, "bN": -2, "bB": -3, "bR": -4, "bQ": -5, "bK": -6}
+        pieces = self.piecesInBoard()
+        pieces = np.array([mapBoard[piece] for piece in pieces])
+        return pieces
+
+    def boardAsNumbers(self):
+        mapBoard = {"--": 0, "wp": 1, "wN": 2, "wB": 3, "wR": 4, "wQ": 5, "wK": 6, "bp": -1, "bN": -2, "bB": -3, "bR": -4, "bQ": -5, "bK": -6}
+        pieces = [piece for row in self.board for piece in row]
+        board = np.array([mapBoard[piece] for piece in pieces])
+        return board
 
     def makeMove(self, move):
         player = game.playerWhite if self.whiteToMove else game.playerBlack
@@ -507,6 +520,12 @@ class GameState():
         moves, movesID = self.getValidMoves()
         return [i for i in range(len(moves))]
 
+    def getBoardSize(self):
+        return len(self.board), len(self.board)
+
+    def getActionSize(self):
+        moves, movesID = self.getValidMoves()
+        return len(moves)
 
 class Castling():
     def __init__(self, wKs, wQs, bKs, bQs):

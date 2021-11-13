@@ -3,6 +3,7 @@
 import sys
 from utils import *
 import argparse
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,25 +21,24 @@ OUTPUT_SIZE = 1  # dict (moves: q_value)
 
 
 class ChessNet(nn.Module):
-    def __init__(self, game, moves, args):
+    def __init__(self, game, args):
         # game params
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
-        self.actions = moves
         self.args = args
 
         super(ChessNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, args.num_channels, (3, 3), stride=(1, 1), padding=1)
-        self.conv2 = nn.Conv2d(args.num_channels, args.num_channels, (3, 3), stride=(1, 1), padding=1)
-        self.conv3 = nn.Conv2d(args.num_channels, args.num_channels, (3, 3), stride=(1, 1))
-        self.conv4 = nn.Conv2d(args.num_channels, args.num_channels, (3, 3), stride=(1, 1))
+        self.conv1 = nn.Conv2d(1, args.get("num_channels"), (3, 3), stride=(1, 1), padding=1)
+        self.conv2 = nn.Conv2d(args.get("num_channels"), args.get("num_channels"), (3, 3), stride=(1, 1), padding=1)
+        self.conv3 = nn.Conv2d(args.get("num_channels"), args.get("num_channels"), (3, 3), stride=(1, 1))
+        self.conv4 = nn.Conv2d(args.get("num_channels"), args.get("num_channels"), (3, 3), stride=(1, 1))
 
-        self.bn1 = nn.BatchNorm2d(args.num_channels)
-        self.bn2 = nn.BatchNorm2d(args.num_channels)
-        self.bn3 = nn.BatchNorm2d(args.num_channels)
-        self.bn4 = nn.BatchNorm2d(args.num_channels)
+        self.bn1 = nn.BatchNorm2d(args.get("num_channels"))
+        self.bn2 = nn.BatchNorm2d(args.get("num_channels"))
+        self.bn3 = nn.BatchNorm2d(args.get("num_channels"))
+        self.bn4 = nn.BatchNorm2d(args.get("num_channels"))
 
-        self.fc1 = nn.Linear(args.num_channels*(self.board_x-4)*(self.board_y-4), 1024)
+        self.fc1 = nn.Linear(args.get("num_channels")*(self.board_x-4)*(self.board_y-4), 1024)
         self.fc_bn1 = nn.BatchNorm1d(1024)
 
         self.fc2 = nn.Linear(1024, 512)
@@ -55,7 +55,7 @@ class ChessNet(nn.Module):
         s = F.relu(self.bn2(self.conv2(s)))                          # batch_size x num_channels x board_x x board_y
         s = F.relu(self.bn3(self.conv3(s)))                          # batch_size x num_channels x (board_x-2) x (board_y-2)
         s = F.relu(self.bn4(self.conv4(s)))                          # batch_size x num_channels x (board_x-4) x (board_y-4)
-        s = s.view(-1, self.args.num_channels*(self.board_x-4)*(self.board_y-4))
+        s = s.view(-1, self.args.get("num_channels")*(self.board_x-4)*(self.board_y-4))
 
         s = F.dropout(F.relu(self.fc_bn1(self.fc1(s))), p=self.args.dropout, training=self.training)  # batch_size x 1024
         s = F.dropout(F.relu(self.fc_bn2(self.fc2(s))), p=self.args.dropout, training=self.training)  # batch_size x 512
@@ -65,19 +65,13 @@ class ChessNet(nn.Module):
 
         return F.log_softmax(pi, dim=1), torch.tanh(v)
 
-args = {
-    'lr': 0.001,
-    'dropout': 0.3,
-    'epochs': 10,
-    'batch_size': 64,
-    'cuda': torch.cuda.is_available(),
-    'num_channels': 512,
-}
-
-
 
 class NetContext():
-    def __init__(self, policyNet, targetNet, optimizer, lossFunction):
+    def __init__(self, gameState, policyNet, targetNet, optimizer, lossFunction):
+        self.board_x, self.board_y = gameState.getBoardSize()
+        self.actionSize = gameState.getActionSize()
+        self.gameState = gameState
+
         self.policyNet = policyNet
 
         self.targetNet = targetNet
@@ -87,12 +81,12 @@ class NetContext():
         self.optimizer = optimizer
         self.lossFunction = lossFunction
 
-    def getQValues(self, gameState, model):
-        inputs = self.convertToTensor(gameState)
+    def getQValues(self, model):
+        inputs = self.convertToTensor(self.gameState.boardAsNumbers())
         outputs = model(inputs)
         return outputs
 
-    def convertToTensor(self, gameState):
+    def convertToTensor(self, pieces):
         pass
         #use moves and convert strings to numbers? a2a4 can be [?, ?, ?, ?]
         #return torch.tensor(gameState.board, dtype=torch.)
