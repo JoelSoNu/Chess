@@ -66,6 +66,8 @@ class ChessNet(nn.Module):
 
         return F.log_softmax(pi, dim=1), torch.tanh(v)
 
+    def updateActionSize(self, size):
+        self.action_size = size
 
 class NetContext():
     def __init__(self, gameState, policyNet, targetNet, optimizer, lossFunction):
@@ -91,13 +93,18 @@ class NetContext():
         return torch.tensor(board, dtype=torch.float)
 
     def train(self, examples, args):
-        for epoch in range(args.get("epochs")):
+        moves, movesID = self.gameState.getValidMoves()
+        self.gameState.makeMove(moves[0])
+        moves2, movesID2 = self.gameState.getValidMoves()
+        print(len(moves2))
+        self.targetNet.updateActionSize(len(moves2))
+        '''for epoch in range(args.get("epochs")):
             print('EPOCH ::: ' + str(epoch + 1))
             self.nnet.train()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
 
-            batch_count = int(len(examples) / args.get("batch_size")
+            batch_count = int(len(examples) / args.get("batch_size")'''
 
     def playTrainingGames(self):
         # play game

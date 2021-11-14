@@ -22,9 +22,25 @@ def main():
     sgd = torch.optim.SGD(policyNet.parameters(), lr=0.1)
     loss = nn.MSELoss()
     netContext = nr.NetContext(gameState, policyNet, targetNet, sgd, loss)
-    print(netContext.convertToTensor(gameState.boardAsNumbers()))
-    print(gameState.boardAsNumbers())
-    print(len(gameState.boardAsNumbers()))
+    board = gameState.boardAsNumbers()
+    print(netContext.convertToTensor(board))
+    print(board)
+    print(len(board))
+    with torch.no_grad():
+        qValues = netContext.getQValues(netContext.targetNet)
+    print(qValues)
+    netContext.train(2, 2)
+    print(board == gameState.boardAsNumbers())
+    with torch.no_grad():
+        qValues = netContext.getQValues(netContext.targetNet)
+    print(qValues)
+    netContext.train(2, 2)
+    print(board == gameState.boardAsNumbers())
+    with torch.no_grad():
+        qValues = netContext.getQValues(netContext.targetNet)
+    print(qValues)
+    netContext.train(2, 2)
+    print(board == gameState.boardAsNumbers())
     with torch.no_grad():
         qValues = netContext.getQValues(netContext.targetNet)
     print(qValues)
