@@ -1,6 +1,7 @@
 #!/bin/env python3
 
 import sys
+
 from utils import *
 import argparse
 import numpy as np
@@ -57,8 +58,8 @@ class ChessNet(nn.Module):
         s = F.relu(self.bn4(self.conv4(s)))                          # batch_size x num_channels x (board_x-4) x (board_y-4)
         s = s.view(-1, self.args.get("num_channels")*(self.board_x-4)*(self.board_y-4))
 
-        s = F.dropout(F.relu(self.fc_bn1(self.fc1(s))), p=self.args.dropout, training=self.training)  # batch_size x 1024
-        s = F.dropout(F.relu(self.fc_bn2(self.fc2(s))), p=self.args.dropout, training=self.training)  # batch_size x 512
+        s = F.dropout(F.relu(self.fc_bn1(self.fc1(s))), p=self.args.get("dropout"), training=self.training)  # batch_size x 1024
+        s = F.dropout(F.relu(self.fc_bn2(self.fc2(s))), p=self.args.get("dropout"), training=self.training)  # batch_size x 512
 
         pi = self.fc3(s)                                                                         # batch_size x action_size
         v = self.fc4(s)                                                                          # batch_size x 1
@@ -86,10 +87,17 @@ class NetContext():
         outputs = model(inputs)
         return outputs
 
-    def convertToTensor(self, pieces):
-        pass
-        #use moves and convert strings to numbers? a2a4 can be [?, ?, ?, ?]
-        #return torch.tensor(gameState.board, dtype=torch.)
+    def convertToTensor(self, board):
+        return torch.tensor(board, dtype=torch.float)
+
+    def train(self, examples, args):
+        for epoch in range(args.get("epochs")):
+            print('EPOCH ::: ' + str(epoch + 1))
+            self.nnet.train()
+            pi_losses = AverageMeter()
+            v_losses = AverageMeter()
+
+            batch_count = int(len(examples) / args.get("batch_size")
 
     def playTrainingGames(self):
         # play game

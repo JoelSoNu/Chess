@@ -25,10 +25,9 @@ def main():
     print(netContext.convertToTensor(gameState.boardAsNumbers()))
     print(gameState.boardAsNumbers())
     print(len(gameState.boardAsNumbers()))
-
-    '''with torch.no_grad():
+    with torch.no_grad():
         qValues = netContext.getQValues(netContext.targetNet)
-    print(qValues)'''
+    print(qValues)
 
 if __name__ == "__main__":
     main()
