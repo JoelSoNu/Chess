@@ -1,7 +1,8 @@
 #!/bin/env python3
 
 import sys
-
+from collections import namedtuple, deque
+import random
 from utils import *
 import argparse
 import numpy as np
@@ -19,6 +20,23 @@ LOSS_VALUE = 0.0
 
 INPUT_SIZE = 2  # board and moves
 OUTPUT_SIZE = 1  # dict (moves: q_value)
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
+
+
+class ReplayMemory(object):
+    def __init__(self, capacity):
+        self.memory = deque([],maxlen=capacity)
+
+    def push(self, *args):
+        """Save a transition"""
+        self.memory.append(Transition(*args))
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)
 
 
 class ChessNet(nn.Module):
@@ -69,6 +87,7 @@ class ChessNet(nn.Module):
     def updateActionSize(self, size):
         self.action_size = size
 
+
 class NetContext():
     def __init__(self, gameState, policyNet, targetNet, optimizer, lossFunction):
         self.board_x, self.board_y = gameState.getBoardSize()
@@ -94,9 +113,9 @@ class NetContext():
 
     def train(self, examples, args):
         moves, movesID = self.gameState.getValidMoves()
+        print(len(moves))
         self.gameState.makeMove(moves[0])
         moves2, movesID2 = self.gameState.getValidMoves()
-        print(len(moves2))
         self.targetNet.updateActionSize(len(moves2))
         '''for epoch in range(args.get("epochs")):
             print('EPOCH ::: ' + str(epoch + 1))
