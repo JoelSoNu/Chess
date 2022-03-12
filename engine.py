@@ -32,6 +32,9 @@ class GameState():
     def boardCopy(self):
         return [x[:] for x in self.board]
 
+    def arrayBoard(self):
+        return [piece for row in self.board for piece in row]
+
     def piecesInBoard(self):
         pieces = [piece for row in self.board for piece in row]
         pieces = list(filter("--".__ne__, pieces))

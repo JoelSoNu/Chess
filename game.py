@@ -11,6 +11,7 @@ from PIL import Image
 import matplotlib.image as img
 
 import engine
+import minimax_abPrunning as minmax
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8  #dimension of chess board is 8x8
@@ -19,8 +20,8 @@ MAX_FPS = 30
 IMAGES = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-playerWhite = "random"
-playerBlack = "random"
+playerWhite = "human"
+playerBlack = "minimax"
 
 
 def loadImages():
@@ -109,7 +110,11 @@ def randomPlay(gs):
     move = moves[random.randint(0, len(moves) - 1)]
     gs.makeMove(move)
 
-PLAYERS = {"human": humanPlay, "random": randomPlay}
+def minimaxPlay(gs):
+    move = minmax.minimaxRoot(3, gs, True)
+    gs.makeMove(move)
+
+PLAYERS = {"human": humanPlay, "random": randomPlay, "minimax": minimaxPlay}
 
 def highlightMoves(screen, gs, row, col):
     moves, movesID = gs.possiblePieceMoves(col, row)
