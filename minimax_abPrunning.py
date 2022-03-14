@@ -68,7 +68,10 @@ def evaluation(gs):
     imWhite = gs.whiteToMove
     color = "w" if imWhite else "b"
     for i in range(0, len(board)):
-        evaluation = evaluation + getPieceValue(board[i][1]) if board[i][0] == color else -getPieceValue(board[i][1])
+        evaluation = evaluation + getPieceValue(board[i][1]) if board[i][0] == color else evaluation - getPieceValue(board[i][1])
+    # print(evaluation)
+    # Need more heuristics so maybe all moves have same value and do first one repeating
+    # it if there is no move that wins material
     return evaluation
 
 
