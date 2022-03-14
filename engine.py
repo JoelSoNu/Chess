@@ -4,6 +4,7 @@ import pygame
 import random
 import game
 import numpy as np
+import minimax_abPrunning as minimax
 
 
 class GameState():
@@ -62,9 +63,9 @@ class GameState():
             move.isEnPassantMove = self.isPassantMove(move, moves)
             move.isPromotionMove = self.isPromotionMove(move, moves)
             if move.isPromotionMove and player == "human":
-                move.piecePromoted = move.pieceMoved[0] + self.pickPromotionPiece()
+                move.piecePromoted = move.pieceMoved[0] + self.humanPickPromotionPiece()
             elif move.isPromotionMove and player != "human":
-                move.piecePromoted = self.pickPromotionPiece(player)
+                move.piecePromoted = self.pickPromotionPiece(player, move)
             print(move.moveID)
             self.movePiece(move)
             self.boardLog.append(self.boardCopy())
@@ -92,7 +93,7 @@ class GameState():
                 return moves[i].isPromotionMove
         return False
 
-    def pickPromotionPiece(self):
+    def humanPickPromotionPiece(self):
         picked = False
         piece = "p"
         while not picked:
@@ -112,11 +113,27 @@ class GameState():
                         picked = True
         return piece
 
-    def pickPromotionPiece(self, player):
+    def pickPromotionPiece(self, player, move):
         color = "w" if self.whiteToMove else "b"
-        #if player == "random":
-        piece = ["Q", "N", "B", "R"]
-        return color + piece[random.randint(0, 3)]
+        pieces = ["Q", "N", "B", "R"]
+        if player == "random":
+            return color + pieces[random.randint(0, 3)]
+        if player == "minimax":
+            maxVal = -9999
+            pieceToPromote = "-"
+            for piece in pieces:
+                move.piecePromoted = color + piece
+                self.movePiece(move)
+                eval = minimax.evaluation(self)
+                self.undoMove()
+                if eval > maxVal:
+                    maxVal = eval
+                    pieceToPromote = piece
+            move.piecePromoted = color + pieceToPromote
+            return color + pieceToPromote
+
+
+
 
 
     def changeKingLocation(self, move, col, row):
