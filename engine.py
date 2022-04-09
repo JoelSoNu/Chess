@@ -124,17 +124,12 @@ class GameState():
             for piece in pieces:
                 move.piecePromoted = color + piece
                 self.movePiece(move)
-                eval = minimax.evaluation(self)
+                eval = -minimax.evaluation(self)
                 self.undoMove()
                 if eval > maxVal:
                     maxVal = eval
                     pieceToPromote = piece
-            move.piecePromoted = color + pieceToPromote
             return color + pieceToPromote
-
-
-
-
 
     def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":

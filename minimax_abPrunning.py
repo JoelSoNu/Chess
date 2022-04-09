@@ -11,7 +11,6 @@ def minimaxRoot(depth, gs, isMaximizing):
         gs.undoMove()
         if( value > bestMove):
             print("Best score: ", str(bestMove))
-            print("Best move: ", str(bestMoveFinal))
             bestMove = value
             bestMoveFinal = move
     return bestMoveFinal

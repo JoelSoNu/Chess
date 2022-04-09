@@ -41,7 +41,6 @@ def main():
     pygame.display.set_caption("Chess board")
     running = True
     stopGame = False
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
