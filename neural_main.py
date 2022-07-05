@@ -21,7 +21,7 @@ def main():
     targetNet = nr.ChessNet(gameState, args)
     sgd = torch.optim.SGD(policyNet.parameters(), lr=0.1)
     loss = nn.MSELoss()
-    netContext = nr.NetContext(gameState, policyNet, targetNet, sgd, loss)
+    netContext = nr.NetContext(gameState, args, 0.01, 1.0, loss)   #  epsilon max = 1.0 , epsilon min = 0.01
     board = gameState.boardAsNumbers()
     print(netContext.convertToTensor(board))
     print(board)

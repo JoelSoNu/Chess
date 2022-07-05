@@ -7,8 +7,8 @@ import array
 import math
 import random
 
-from PIL import Image
-import matplotlib.image as img
+#from PIL import Image
+#import matplotlib.image as img
 
 import engine
 import minimax_abPrunning as minmax

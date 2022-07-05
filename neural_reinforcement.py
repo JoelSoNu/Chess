@@ -20,25 +20,51 @@ LOSS_VALUE = 0.0
 
 INPUT_SIZE = 2  # board and moves
 OUTPUT_SIZE = 1  # dict (moves: q_value)
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
 
 
-class ReplayMemory(object):
+#DQN Memory
+class ReplayMemory:
     def __init__(self, capacity):
-        self.memory = deque([],maxlen=capacity)
+        self.capacity = capacity
+        self.states = []
+        self.actions = []
+        self.next_states = []
+        self.rewards = []
+        self.dones = []
+        self.idx = 0
 
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
+    def store(self, states, actions, next_states, rewards, dones):
+        if len(self.states) < self.capacity:
+            self.states.append(states)
+            self.actions.append(actions)
+            self.next_states.append(next_states)
+            self.rewards.append(rewards)
+            self.dones.append(dones)
+        else:
+            self.states[self.idx] = states
+            self.actions[self.idx] = actions
+            self.next_states[self.idx] = next_states
+            self.rewards[self.idx] = rewards
+            self.dones[self.idx] = dones
 
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
+        self.idx = (self.idx + 1) % self.capacity
+
+
+    def sample(self, batch_size, device):
+        indices_to_sample = random.sample(range(len(self.states)), k=batch_size)
+        states = torch.from_numpy(np.array(self.states)[indices_to_sample]).float().to(device)
+        actions = torch.from_numpy(np.array(self.actions)[indices_to_sample]).float().to(device)
+        next_states = torch.from_numpy(np.array(self.next_states)[indices_to_sample]).float().to(device)
+        rewards = torch.from_numpy(np.array(self.rewards)[indices_to_sample]).float().to(device)
+        dones = torch.from_numpy(np.array(self.dones)[indices_to_sample]).float().to(device)
+
+        return states, actions, next_states, rewards, dones
 
     def __len__(self):
-        return len(self.memory)
+        return len(self.states)
 
 
+#DQN Net
 class ChessNet(nn.Module):
     def __init__(self, game, args):
         # game params
@@ -57,7 +83,7 @@ class ChessNet(nn.Module):
         self.bn3 = nn.BatchNorm2d(args.get("num_channels"))
         self.bn4 = nn.BatchNorm2d(args.get("num_channels"))
 
-        self.fc1 = nn.Linear(args.get("num_channels")*(self.board_x-4)*(self.board_y-4), 1024)
+        self.fc1 = nn.Linear(args.get("num_channels") * self.board_x * self.board_y, 1024)
         self.fc_bn1 = nn.BatchNorm1d(1024)
 
         self.fc2 = nn.Linear(1024, 512)
@@ -88,19 +114,24 @@ class ChessNet(nn.Module):
         self.action_size = size
 
 
+#DQN Agent
 class NetContext():
-    def __init__(self, gameState, policyNet, targetNet, optimizer, lossFunction):
+    def __init__(self, gameState, args, epsilon_min, epsilon_max, lossFunction):
         self.board_x, self.board_y = gameState.getBoardSize()
         self.actionSize = gameState.getActionSize()
         self.gameState = gameState
+        self.device = torch.device("cuda" if args.get("cuda") else "cpu")
 
-        self.policyNet = policyNet
+        self.policyNet = ChessNet(gameState, args).to(self.device)
 
-        self.targetNet = targetNet
+        self.targetNet = ChessNet(gameState, args).to(self.device)
         self.targetNet.load_state_dict(self.policyNet.state_dict())
         self.targetNet = self.targetNet.eval()
+        self.targetNet.load_state_dict(self.policyNet.state_dict())
 
-        self.optimizer = optimizer
+        self.epsilon_min = epsilon_min
+        self.epsilon_max = epsilon_max
+        self.optimizer = torch.optim.SGD(self.policyNet.parameters(), lr=0.1)
         self.lossFunction = lossFunction
 
     def getQValues(self, model):
