@@ -33,22 +33,35 @@ class ReplayMemory:
         self.dones = []
         self.idx = 0
 
-    def store(self, states, actions, next_states, rewards, dones):
+    def store(self, states, actions, next_states, dones):
         if len(self.states) < self.capacity:
             self.states.append(states)
             self.actions.append(actions)
             self.next_states.append(next_states)
-            self.rewards.append(rewards)
+            #self.rewards.append(rewards)
             self.dones.append(dones)
         else:
             self.states[self.idx] = states
             self.actions[self.idx] = actions
             self.next_states[self.idx] = next_states
-            self.rewards[self.idx] = rewards
+            #self.rewards[self.idx] = rewards
             self.dones[self.idx] = dones
 
         self.idx = (self.idx + 1) % self.capacity
 
+    def store_rewards(self, reward, discount):
+        idx = self.idx
+        self.rewards[idx] = reward
+        next_idx = (idx - 1) % self.capacity
+        black = True
+        for _ in range(len(self.states)):
+            if not black:
+                self.rewards[next_idx] = self.rewards[idx] * discount
+            else:
+                self.rewards[next_idx] = 0
+            black = not black
+            idx = next_idx
+            next_idx = (idx - 1) % self.capacity
 
     def sample(self, batch_size, device):
         indices_to_sample = random.sample(range(len(self.states)), k=batch_size)
@@ -116,25 +129,77 @@ class ChessNet(nn.Module):
 
 #DQN Agent
 class NetContext():
-    def __init__(self, gameState, args, epsilon_min, epsilon_max, lossFunction):
+    def __init__(self, gameState, args, discount, epsilon_min, epsilon_max, epsilon_decay, memory_cap, lossFunction):
         self.board_x, self.board_y = gameState.getBoardSize()
         self.actionSize = gameState.getActionSize()
+        self.valid_moves = gameState.getValidMoves()
         self.gameState = gameState
         self.device = torch.device("cuda" if args.get("cuda") else "cpu")
 
-        self.policyNet = ChessNet(gameState, args).to(self.device)
-
-        self.targetNet = ChessNet(gameState, args).to(self.device)
-        self.targetNet.load_state_dict(self.policyNet.state_dict())
-        self.targetNet = self.targetNet.eval()
-        self.targetNet.load_state_dict(self.policyNet.state_dict())
-
+        self.discount = discount
         self.epsilon_min = epsilon_min
-        self.epsilon_max = epsilon_max
-        self.optimizer = torch.optim.SGD(self.policyNet.parameters(), lr=0.1)
+        self.epsilon = epsilon_max
+        self.epsilon_decay = epsilon_decay
+        self.replay_memory = ReplayMemory(memory_cap)
         self.lossFunction = lossFunction
 
-    def getQValues(self, model):
+        self.policyNet = ChessNet(gameState, args).to(self.device)
+        self.optimizer = torch.optim.SGD(self.policyNet.parameters(), lr=0.1)
+
+        self.targetNet = ChessNet(gameState, args).to(self.device)
+
+        self.targetNet.eval()
+        self.update_target()
+
+    def update_target(self):
+        self.targetNet.load_state_dict(self.policyNet.state_dict())
+
+    def select_action(self, state):
+        if random.random() < self.epsilon:
+            return self.valid_moves.sample()
+
+        if not torch.is_tensor(state):
+            state = torch.FloatTensor(state).to(self.device)
+
+        with torch.no_grad():
+            action = torch.argmax(self.policyNet(state))
+        return action.item()
+
+    def update_epsilon(self):
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+    def learn(self, batchsize):
+        if len(self.replay_memory) < batchsize:
+            return
+
+        states, actions, next_states, rewards, dones = self.replay_memory.sample(batchsize, self.device)
+        actions = actions.reshape((-1, 1))
+        rewards = rewards.reshape((-1, 1))
+        dones = dones.reshape((-1, 1))
+
+        predicted_qs = self.policyNet(states)
+        predicted_qs = predicted_qs.gather(1, actions)
+
+        target_qs = self.targetNet(next_states)
+        target_qs = torch.max(target_qs, dim=1).values
+        target_qs = target_qs.reshape(-1, 1)
+        target_qs[dones] = 0.0
+        y_js = rewards + (self.discount * target_qs)
+
+        loss = self.lossFunction(predicted_qs, y_js)
+        self.policyNet.optimizer.zero_grad()
+        loss.backward()
+        self.policyNet.optimizer.step()
+
+    def save(self, filename):
+        torch.save(self.policyNet.state_dict(), filename)
+
+    def load(self, filename):
+        self.policyNet.load_state_dict(torch.load(filename))
+        self.policyNet.eval()
+
+    # ----------------------------
+    '''def getQValues(self, model):
         inputs = self.convertToTensor(self.gameState.boardAsNumbers())
         outputs = model(inputs)
         return outputs
@@ -148,14 +213,14 @@ class NetContext():
         self.gameState.makeMove(moves[0])
         moves2, movesID2 = self.gameState.getValidMoves()
         self.targetNet.updateActionSize(len(moves2))
-        '''for epoch in range(args.get("epochs")):
+        for epoch in range(args.get("epochs")):
             print('EPOCH ::: ' + str(epoch + 1))
             self.nnet.train()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
 
-            batch_count = int(len(examples) / args.get("batch_size")'''
-
+            batch_count = int(len(examples) / args.get("batch_size")
+'''
     def playTrainingGames(self):
         # play game
         # updateTrainingGameover

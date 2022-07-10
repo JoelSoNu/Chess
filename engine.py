@@ -538,6 +538,10 @@ class GameState():
     def getBoardSize(self):
         return len(self.board), len(self.board)
 
+    def getCurrentBoard(self):
+        return self.board
+
+
     def getActionSize(self):
         moves, movesID = self.getValidMoves()
         return len(moves)
