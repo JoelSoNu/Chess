@@ -155,15 +155,20 @@ class NetContext():
         self.targetNet.load_state_dict(self.policyNet.state_dict())
 
     def select_action(self, state):
-        if random.random() < self.epsilon:
-            return self.valid_moves.sample()
+        if random.uniform(0, 100) < self.epsilon:
+            move = self.valid_moves[random.randint(0, len(self.valid_moves) - 1)]
+            print("a")
+            return move
 
         if not torch.is_tensor(state):
             state = torch.FloatTensor(state).to(self.device)
 
         with torch.no_grad():
             action = torch.argmax(self.policyNet(state))
-        return action.item()
+        with torch.no_grad():
+            move = torch.argmax(self.policyNet(action))
+        print("b")
+        return move.item()
 
     def update_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)

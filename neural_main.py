@@ -1,5 +1,7 @@
 #!/bin/env python3
+import os
 
+import numpy as np
 import torch
 from torch import nn
 import random
@@ -52,36 +54,98 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
 
     step_cnt = 0
     reward_history = []
+    best_score = -np.inf
+
+    for ep_cnt in range(train_eps):
+        state = env.getCurrentBoard()
+        done = False
+        ep_reward = 0
+
+        while not done:
+            # White (the agent)
+            action = agent.select_action(state)
+            env.makeMove(action)
+            next_state = env.getCurrentBoard
+            done = env.inCheckMate() or env.itsDraw()
+            agent.replay_memory.store(state, action, next_state, done)
+            state = next_state
+
+            # Black random
+            moves, movesID = env.getValidMoves()
+            move = moves[random.randint(0, len(moves) - 1)]
+            env.makeMove(move)
+            next_state = env.getCurrentBoard
+            done = env.inCheckMate() or env.itsDraw()
+            agent.replay_memory.store(state, action, next_state, done)
+            state = next_state
+
+            if step_cnt % update_freq == 0:
+                agent.update_target()
+        if done:
+            if env.itsDraw():
+                ep_reward = 500
+            elif env.inCheckMate() and env.blackToMove():
+                ep_reward = 1000
+            else:
+                ep_reward = 0
+        agent.replay_memory.store_rewards(ep_reward, 0.99)
+        agent.update_epsilon()
+        reward_history.append(ep_reward)
+        current_avg_store = np.mean(reward_history[-100:])
+
+        print('Ep: {}, Total Steps: {}, Ep Score: {}, Avg Score: {}, Updated Epsilon: {}'.format(
+            ep_cnt, step_cnt, ep_reward, current_avg_store, agent.epsilon))
+
+        if current_avg_store >= best_score:
+            agent.save(model_filename)
+            best_score = current_avg_store
+
+def test(env, agent, test_eps):
+    for ep_cnt in range(test_eps):
+        state = env.getCurrentBoard()
+        done = False
+        ep_reward = 0
+
+        while not done:
+            # White (the agent)
+            action = agent.select_action(state)
+            env.makeMove(action)
+            next_state = env.getCurrentBoard
+            done = env.inCheckMate() or env.itsDraw()
+            state = next_state
+
+            # Black random
+            moves, movesID = env.getValidMoves()
+            move = moves[random.randint(0, len(moves) - 1)]
+            env.makeMove(move)
+            next_state = env.getCurrentBoard
+            done = env.inCheckMate() or env.itsDraw()
+            state = next_state
+        if done:
+            if env.itsDraw():
+                ep_reward = 500
+            elif env.inCheckMate() and env.blackToMove():
+                ep_reward = 1000
+            else:
+                ep_reward = 0
+
+        print('Ep: {}, Ep Score: {}'.format(ep_cnt, ep_reward))
+
 
 def main():
-    gameState = engine.GameState()
-    policyNet = nr.ChessNet(gameState, args)
-    targetNet = nr.ChessNet(gameState, args)
-    sgd = torch.optim.SGD(policyNet.parameters(), lr=0.1)
+    train_mode = True
+    env = engine.GameState()
+    model_filename = "AlphaZero"
     loss = nn.MSELoss()
-    netContext = nr.NetContext(gameState, args, 0.99, 0.01, 1.0, 0.95, 10000, loss)   #  epsilon max = 1.0 , epsilon min = 0.01
-    board = gameState.boardAsNumbers()
-    print(netContext.convertToTensor(board))
-    print(board)
-    print(len(board))
-    with torch.no_grad():
-        qValues = netContext.getQValues(netContext.targetNet)
-    print(qValues)
-    netContext.train(2, 2)
-    print(board == gameState.boardAsNumbers())
-    with torch.no_grad():
-        qValues = netContext.getQValues(netContext.targetNet)
-    print(qValues)
-    netContext.train(2, 2)
-    print(board == gameState.boardAsNumbers())
-    with torch.no_grad():
-        qValues = netContext.getQValues(netContext.targetNet)
-    print(qValues)
-    netContext.train(2, 2)
-    print(board == gameState.boardAsNumbers())
-    with torch.no_grad():
-        qValues = netContext.getQValues(netContext.targetNet)
-    print(qValues)
+    if train_mode:
+        agent = nr.NetContext(env, args, 0.99, 0.01, 1.0, 0.95, 10000, loss)
+        train(env=env, agent=agent, train_eps=200, memory_fill_eps=20, batchsize=64, update_freq=100, model_filename=model_filename)
+    else:
+        agent = nr.NetContext(env, args, 0.99, 0.0, 0.0, 0.0, 10000, loss)
+        agent.load(model_filename)
+
+        test(env=env, agent=agent, test_eps=100)
+
 
 if __name__ == "__main__":
     main()
