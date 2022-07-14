@@ -20,13 +20,13 @@ args = {
 
 def fill_memory(env, agent, memory_fill_eps):
     for _ in range(memory_fill_eps):
-        state = env.getCurrentBoard()
+        state = env.boardAsNumbers()
         done = False
         while not done:
             #White (the agent)
             action = agent.select_action(state)
             env.makeMove(action)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
@@ -35,7 +35,7 @@ def fill_memory(env, agent, memory_fill_eps):
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
             env.makeMove(move)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
@@ -57,7 +57,7 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
     best_score = -np.inf
 
     for ep_cnt in range(train_eps):
-        state = env.getCurrentBoard()
+        state = env.boardAsNumbers()
         done = False
         ep_reward = 0
 
@@ -65,7 +65,7 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
             # White (the agent)
             action = agent.select_action(state)
             env.makeMove(action)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
@@ -74,7 +74,7 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
             env.makeMove(move)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
@@ -102,7 +102,7 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
 
 def test(env, agent, test_eps):
     for ep_cnt in range(test_eps):
-        state = env.getCurrentBoard()
+        state = env.boardAsNumbers()
         done = False
         ep_reward = 0
 
@@ -110,7 +110,7 @@ def test(env, agent, test_eps):
             # White (the agent)
             action = agent.select_action(state)
             env.makeMove(action)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             state = next_state
 
@@ -118,7 +118,7 @@ def test(env, agent, test_eps):
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
             env.makeMove(move)
-            next_state = env.getCurrentBoard
+            next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             state = next_state
         if done:

@@ -63,7 +63,7 @@ def calculateMove(board):
 '''
 
 def evaluation(gs):
-    board = gs.arrayBoard()
+    board = gs.g()
     evaluation = 0
     imWhite = gs.whiteToMove
     color = "w" if imWhite else "b"
