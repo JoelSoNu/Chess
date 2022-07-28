@@ -24,7 +24,7 @@ MAX_FPS = 30
 IMAGES = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-playerWhite = "human1"
+playerWhite = "human"
 playerBlack = "alpha"
 
 args = {
