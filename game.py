@@ -12,6 +12,10 @@ import random
 
 import engine
 import minimax_abPrunning as minmax
+import neural_reinforcement as nr
+import torch
+from torch import nn
+
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8  #dimension of chess board is 8x8
@@ -20,9 +24,17 @@ MAX_FPS = 30
 IMAGES = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-playerWhite = "human"
-playerBlack = "minimax"
+playerWhite = "human1"
+playerBlack = "alpha"
 
+args = {
+    'lr': 0.001,
+    'dropout': 0.3,
+    'epochs': 10,
+    'batch_size': 64,
+    'cuda': torch.cuda.is_available(),
+    'num_channels': 512,
+}
 
 def loadImages():
     pieces = ['wp', 'wN', 'wB', 'wR', 'wQ', 'wK', 'bp', 'bN', 'bB', 'bR', 'bQ', 'bK']
@@ -41,6 +53,12 @@ def main():
     pygame.display.set_caption("Chess board")
     running = True
     stopGame = False
+    #----
+    model_filename = "AlphaZero"
+    loss = nn.MSELoss()
+    agent = nr.NetContext(gs, args, 0.99, 0.0, 0.0, 0.0, 100000, loss)
+    agent.load(model_filename)
+    #----
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -60,7 +78,7 @@ def main():
             elif gs.whiteToMove and not stopGame:
                 PLAYERS[playerWhite](gs)
             elif not gs.whiteToMove and not stopGame:
-                PLAYERS[playerBlack](gs)
+                PLAYERS[playerBlack](gs, agent)
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         pygame.display.flip()
@@ -113,7 +131,13 @@ def minimaxPlay(gs):
     move = minmax.minimaxRoot(3, gs, True)
     gs.makeMove(move)
 
-PLAYERS = {"human": humanPlay, "random": randomPlay, "minimax": minimaxPlay}
+def agentPlay(gs, agent):
+    state = gs.boardAsNumbers()
+    action = agent.select_action(state)
+    moves, movesID = gs.getValidMoves()
+    gs.makeMove(moves[action])
+
+PLAYERS = {"human": humanPlay, "random": randomPlay, "minimax": minimaxPlay, "alpha": agentPlay}
 
 def highlightMoves(screen, gs, row, col):
     moves, movesID = gs.possiblePieceMoves(col, row)

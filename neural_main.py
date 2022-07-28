@@ -25,12 +25,14 @@ def fill_memory(env, agent, memory_fill_eps):
         while not done:
             #White (the agent)
             action = agent.select_action(state)
-            env.makeMove(action)
+            moves, movesID = env.getValidMoves()
+            env.makeMove(moves[action])
             next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
-
+            if done:
+                break
             #Black random
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
@@ -39,10 +41,12 @@ def fill_memory(env, agent, memory_fill_eps):
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
+            if done:
+                break
         if done:
             if env.itsDraw():
                 reward = 500
-            elif env.inCheckMate() and env.blackToMove():
+            elif env.inCheckMate() and not env.whiteToMove:
                 reward = 1000
             else:
                 reward = 0
@@ -64,12 +68,14 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
         while not done:
             # White (the agent)
             action = agent.select_action(state)
-            env.makeMove(action)
+            moves, movesID = env.getValidMoves()
+            env.makeMove(moves[action])
             next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
-
+            if done:
+                break
             # Black random
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
@@ -81,6 +87,8 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
 
             if step_cnt % update_freq == 0:
                 agent.update_target()
+            if done:
+                break
         if done:
             if env.itsDraw():
                 ep_reward = 500
@@ -109,11 +117,13 @@ def test(env, agent, test_eps):
         while not done:
             # White (the agent)
             action = agent.select_action(state)
-            env.makeMove(action)
+            moves, movesID = env.getValidMoves()
+            env.makeMove(moves[action])
             next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             state = next_state
-
+            if done:
+                break
             # Black random
             moves, movesID = env.getValidMoves()
             move = moves[random.randint(0, len(moves) - 1)]
@@ -121,10 +131,12 @@ def test(env, agent, test_eps):
             next_state = env.boardAsNumbers()
             done = env.inCheckMate() or env.itsDraw()
             state = next_state
+            if done:
+                break
         if done:
             if env.itsDraw():
                 ep_reward = 500
-            elif env.inCheckMate() and env.blackToMove():
+            elif env.inCheckMate() and not env.whiteToMove:
                 ep_reward = 1000
             else:
                 ep_reward = 0
@@ -133,15 +145,15 @@ def test(env, agent, test_eps):
 
 
 def main():
-    train_mode = True
+    train_mode = False
     env = engine.GameState()
     model_filename = "AlphaZero"
     loss = nn.MSELoss()
     if train_mode:
-        agent = nr.NetContext(env, args, 0.99, 0.01, 1.0, 0.95, 10000, loss)
+        agent = nr.NetContext(env, args, 0.99, 0.01, 1.0, 0.95, 100000, loss)
         train(env=env, agent=agent, train_eps=200, memory_fill_eps=20, batchsize=64, update_freq=100, model_filename=model_filename)
     else:
-        agent = nr.NetContext(env, args, 0.99, 0.0, 0.0, 0.0, 10000, loss)
+        agent = nr.NetContext(env, args, 0.99, 0.0, 0.0, 0.0, 100000, loss)
         agent.load(model_filename)
 
         test(env=env, agent=agent, test_eps=100)

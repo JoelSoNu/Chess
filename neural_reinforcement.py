@@ -29,7 +29,7 @@ class ReplayMemory:
         self.states = []
         self.actions = []
         self.next_states = []
-        self.rewards = []
+        self.rewards = [0 for _ in range(capacity)]
         self.dones = []
         self.idx = 0
 
@@ -51,6 +51,8 @@ class ReplayMemory:
 
     def store_rewards(self, reward, discount):
         idx = self.idx
+        print(reward)
+        print(idx)
         self.rewards[idx] = reward
         next_idx = (idx - 1) % self.capacity
         black = True
@@ -82,7 +84,7 @@ class ChessNet(nn.Module):
     def __init__(self, game, args):
         # game params
         self.board = game.getCurrentBoard()
-        self.action_size = game.getActionSize()
+        self.action_size = 21 #game.getActionSize()
         self.args = args
 
         super(ChessNet, self).__init__()
@@ -93,12 +95,16 @@ class ChessNet(nn.Module):
 
 
 
-    def forward(self, x):
+    def forward(self, x, game):
         x = F.relu(self.dense1(x))
         x = F.relu(self.dense2(x))
 
-        pi = self.dense3(x)                                                                         # batch_size x action_size
-        v = self.dense4(pi)                                                                          # batch_size x 1
+        self.action_size = game.getActionSize()
+        self.dense3 = nn.Linear(in_features=64, out_features=self.action_size)
+        self.dense4 = nn.Linear(in_features=self.action_size, out_features=1)
+
+        pi = self.dense3(x)
+        v = self.dense4(pi)
 
         return F.log_softmax(pi), torch.tanh(v)
 
@@ -132,17 +138,22 @@ class NetContext():
 
     def select_action(self, state):
         if random.uniform(0, 100) < self.epsilon:
-            move = self.valid_moves[random.randint(0, len(self.valid_moves) - 1)]
-            return move
+            return random.randint(0, len(self.valid_moves))
+
 
         if not torch.is_tensor(state):
             state = torch.FloatTensor(state).to(self.device)
 
         with torch.no_grad():
             action = torch.argmax(state)
+            action = action.unsqueeze(0).float()
 
         with torch.no_grad():
-            move = torch.argmax(self.policyNet(action.unsqueeze(0)))
+
+            moves, ratio = self.policyNet(action, self.gameState)
+            move = torch.argmax(moves)
+            print(move)
+            print("-")
 
         return move.item()
 
@@ -158,7 +169,7 @@ class NetContext():
         rewards = rewards.reshape((-1, 1))
         dones = dones.reshape((-1, 1))
 
-        predicted_qs = self.policyNet(states)
+        predicted_qs, ratio = self.policyNet(states)
         predicted_qs = predicted_qs.gather(1, actions)
 
         target_qs = self.targetNet(next_states)
