@@ -74,6 +74,7 @@ def train(env, agent, train_eps, memory_fill_eps, batchsize, update_freq, model_
             done = env.inCheckMate() or env.itsDraw()
             agent.replay_memory.store(state, action, next_state, done)
             state = next_state
+            step_cnt = step_cnt + 1
             if done:
                 break
             # Black random
@@ -145,15 +146,15 @@ def test(env, agent, test_eps):
 
 
 def main():
-    train_mode = False
+    train_mode = True
     env = engine.GameState()
     model_filename = "AlphaZero"
     loss = nn.MSELoss()
     if train_mode:
-        agent = nr.NetContext(env, args, 0.99, 0.01, 1.0, 0.95, 100000, loss)
+        agent = nr.NetContext(env, args, 0.99, 0.01, 1.0, 0.95, 1000000, loss)
         train(env=env, agent=agent, train_eps=200, memory_fill_eps=20, batchsize=64, update_freq=100, model_filename=model_filename)
     else:
-        agent = nr.NetContext(env, args, 0.99, 0.0, 0.0, 0.0, 100000, loss)
+        agent = nr.NetContext(env, args, 0.99, 0.0, 0.0, 0.0, 1000000, loss)
         agent.load(model_filename)
 
         test(env=env, agent=agent, test_eps=100)

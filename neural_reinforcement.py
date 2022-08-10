@@ -84,7 +84,7 @@ class ChessNet(nn.Module):
     def __init__(self, game, args):
         # game params
         self.board = game.getCurrentBoard()
-        self.action_size = 21 #game.getActionSize()
+        self.action_size = 20    #game.getActionSize()
         self.args = args
 
         super(ChessNet, self).__init__()

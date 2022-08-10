@@ -130,6 +130,8 @@ class GameState():
                     maxVal = eval
                     pieceToPromote = piece
             return color + pieceToPromote
+        if player == "alpha":
+            return move.piecePromoted
 
     def changeKingLocation(self, move, col, row):
         if move.pieceMoved[0] == "w":
